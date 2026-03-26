@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>Безопасный месенджер MDC</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    
+    <style>
+        /* НОВЫЙ СПОКОЙНЫЙ ДИЗАЙН (БЕЗ КРАСНОГО) */
+        :root { 
+            --bg: #111111; /* Очень темно-серый, почти черный */
+            --text: #e0e0e0; /* Светло-серый текст */
+            --panel: #1e1e1e; /* Панели чуть светлее фона */
+            --accent: #0088cc; /* Синий акцент (как в Telegram) */
+            --msg-mine: #005580; /* Темно-синий для своих сообщений */
+            --border: #333333; /* Темные границы */
+        }
+        .light-theme { 
+            --bg: #f5f5f7; 
+            --text: #1c1c1e; 
+            --panel: #ffffff; 
+            --accent: #007aff; /* Синий Apple */
+            --msg-mine: #007aff;
+            --border: #e5e5ea;
+        }
+
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; transition: 0.3s; overflow: hidden; }
+        .screen { display: flex; flex-direction: column; height: 100vh; width: 100%; position: absolute; background: var(--bg); }
+        .hidden { display: none !important; }
+
+        /* Шапка с поиском */
+        .header { background: var(--panel); padding: 10px 15px; display: flex; align-items: center; border-bottom: 1px solid var(--border); gap: 10px; box-sizing: border-box; }
+        .search-area { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 5px 12px; display: flex; align-items: center; }
+        .search-area input { border: none; background: none; color: var(--text); width: 100%; outline: none; font-size: 14px; padding: 3px 0; }
+        
+        .avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; overflow: hidden; cursor: pointer; flex-shrink: 0; font-size: 16px; border: 1px solid var(--border); }
+        .avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+        .card { background: var(--panel); margin: 8px 12px; padding: 15px; border-radius: 10px; border: 1px solid var(--border); transition: background 0.2s; }
+        .card:active { background: #2a2a2a; }
+        .news-card { border-left: 4px solid var(--accent); cursor: pointer; position: relative; }
+        .news-badge { position: absolute; right: 12px; top: 12px; background: var(--accent); color: #fff; font-size: 10px; padding: 2px 7px; border-radius: 10px; text-transform: uppercase; font-weight: bold; }
+
+        #messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAIklEQVQIW2NkQAKrVq36z8gAFWNhYfEfi4+PjwAV4+PjA5mFCwNYKjD9AAAAAElFTkSuQmCC'); /* Легкий паттерн фона */ }
+        .msg { padding: 10px 15px; border-radius: 18px; max-width: 75%; font-size: 15px; line-height: 1.4; word-wrap: break-word; position: relative; }
+        .msg.mine { align-self: flex-end; background: var(--msg-mine); color: #fff; border-bottom-right-radius: 4px; }
+        .msg.theirs { align-self: flex-start; background: var(--panel); color: var(--text); border-bottom-left-radius: 4px; border: 1px solid var(--border); }
+
+        button { padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; transition: opacity 0.2s; }
+        button:active { opacity: 0.8; }
+        input[type="text"], input[type="email"], input[type="password"], select { padding: 12px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 8px; margin-bottom: 12px; font-size: 14px; width: 100%; box-sizing: border-box; outline: none; }
+        input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus { border-color: var(--accent); }
+    </style>
+</head>
+<body>
+
+    <div id="auth-screen" class="screen" style="justify-content: center; align-items: center; display: flex;">
+        <div class="card" style="width: 320px; text-align: center; cursor: default; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <h1 style="margin: 0 0 25px; color: var(--accent); font-size: 40px; font-weight: 800; letter-spacing: -1px;">MDC</h1>
+            <input type="email" id="email" placeholder="Email (finderss42@gmail.com)">
+            <input type="password" id="pass" placeholder="Пароль (мин. 6 символов)">
+            <button onclick="handleAuth()" style="width: 100%;">ВОЙТИ ИЛИ СОЗДАТЬ</button>
+            <div style="font-size: 11px; opacity: 0.5; margin-top: 15px;">Безопасный обмен сообщениями</div>
+        </div>
+    </div>
+
+    <div id="main-screen" class="screen hidden">
+        <div class="header">
+            <div class="avatar" onclick="openSettings()" id="my-av-btn">?</div>
+            <div class="search-area">
+                <input type="text" id="searchInput" placeholder="Поиск @username..." oninput="searchUser()">
+            </div>
+            <div style="width: 10px;"></div>
+        </div>
+        
+        <div id="content-list" style="overflow-y: auto; flex: 1; padding-top: 5px;">
+            <div class="card news-card" onclick="openNews()">
+                <b>MDC NEWS</b> <span class="news-badge">Official</span>
+                <div style="font-size: 12px; opacity: 0.7; margin-top: 6px;">Обновления и новости проекта</div>
+            </div>
+            <div id="search-results"></div>
+        </div>
+    </div>
+
+    <div id="chat-screen" class="screen hidden">
+        <div class="header" style="justify-content: flex-start;">
+            <button onclick="backToMain()" style="background:none; border:none; color:var(--accent); font-size:26px; padding: 0 10px 0 0; margin: 0;">←</button>
+            <b id="chat-title" style="font-size: 17px;">Чат</b>
+            <div style="flex: 1;"></div>
+            <div class="avatar" id="chat-header-av" style="width: 32px; height: 32px; font-size: 14px;"></div>
+        </div>
+        <div id="messages"></div>
+        <div id="input-area" style="padding: 10px 15px; background: var(--panel); display: flex; gap: 10px; border-top: 1px solid var(--border); align-items: center;">
+            <input type="text" id="msgInput" placeholder="Сообщение..." style="flex: 1; margin: 0; border-radius: 20px;">
+            <button onclick="sendMessage()" style="width: 45px; height: 45px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 18px;">➤</button>
+        </div>
+        <div id="read-only-msg" class="hidden" style="padding: 20px; text-align: center; opacity: 0.6; font-size: 14px; background: var(--panel); border-top: 1px solid var(--border);">
+            Только администратор может делать публикации в этом канале.
+        </div>
+    </div>
+
+    <div id="settings-screen" class="screen hidden" style="overflow-y: auto;">
+        <div class="header">
+            <button onclick="closeSettings()" style="background:none; border:none; color:var(--accent); font-size:16px; font-weight: bold;">Назад</button>
+            <b style="flex: 1; text-align: center; font-size: 17px;">Настройки</b>
+            <div style="width: 50px;"></div>
+        </div>
+        <div class="card">
+            <h3 style="margin-top: 0; color: var(--accent);">👤 Профиль</h3>
+            <div class="avatar" id="set-av-preview" style="width: 70px; height: 70px; margin: 0 auto 15px; font-size: 28px;">?</div>
+            <input type="text" id="set-name" placeholder="Отображаемое имя">
+            <input type="text" id="set-username" placeholder="Username (без @)">
+            <input type="text" id="set-avatar" placeholder="URL аватарки (прямая ссылка)">
+            <button onclick="saveProfile()" style="width:100%">СОХРАНИТЬ ПРОФИЛЬ</button>
+        </div>
+        <div class="card">
+            <h3 style="margin-top: 0; color: var(--accent);">🎨 Дизайн</h3>
+            <button onclick="toggleTheme()" style="width:100%; margin-bottom: 12px; background: #333; border: 1px solid #555;">СМЕНИТЬ ТЕМУ (Светлая/Темная)</button>
+            
+            <label style="font-size: 13px; opacity: 0.8; margin-bottom: 5px; display: block;">Цвет акцента:</label>
+            <select id="accent-picker" onchange="changeAccent(this.value)">
+                <option value="#0088cc">Синий MDC (Default)</option>
+                <option value="#2ecc71">Изумрудный</option>
+                <option value="#9b59b6">Аметистовый</option>
+                <option value="#e67e22">Тыквенный</option>
+                <option value="#ff0000">⚠️ Классический Красный</option>
+            </select>
+        </div>
+        <div style="text-align: center; padding: 20px; opacity: 0.3; font-size: 11px;">MDC Ultra v1.2 | finderss42@gmail.com</div>
+    </div>
+
+    <script>
+        // Твои данные Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBuc1D71KVZdyNG8ZeBnHjPPe_QFpqjr9M",
+            authDomain: "mdcjsnsks.firebaseapp.com",
+            projectId: "mdcjsnsks",
+            storageBucket: "mdcjsnsks.firebasestorage.app",
+            messagingSenderId: "389971124460",
+            appId: "1:389971124460:web:417a7f1f3411a3e75dc5c9"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        
+        let me = null;
+        let partner = null;
+        let isNewsMode = false;
+        
+        // Твоя админская почта
+        const ADMIN_EMAIL = "finderss42@gmail.com"; 
+
+        async function handleAuth() {
+            const email = document.getElementById('email').value.trim();
+            const pass = document.getElementById('pass').value;
+            if(!email || pass.length < 6) return alert("Введите корректный email и пароль (минимум 6 символов)");
+
+            try {
+                let res;
+                try { 
+                    res = await auth.signInWithEmailAndPassword(email, pass); 
+                } catch (err) {
+                    // Если пользователя нет, пробуем создать аккаунт
+                    if (err.code === 'auth/user-not-found') {
+                        res = await auth.createUserWithEmailAndPassword(email, pass);
+                    } else if (err.code === 'auth/wrong-password') {
+                        alert("Неверный пароль для этого email."); return;
+                    } else { throw err; }
+                }
+
+                const doc = await db.collection("users").doc(res.user.uid).get();
+                if (doc.exists) {
+                    me = doc.data();
+                } else {
+                    // Создаем новый профиль пользователя
+                    me = { 
+                        uid: res.user.uid, 
+                        email: email, 
+                        name: email.split('@')[0], 
+                        username: "user" + Math.floor(Math.random()*9999), 
+                        avatar: "", 
+                        theme: "dark", 
+                        accent: "#0088cc" 
+                    };
+                    await db.collection("users").doc(me.uid).set(me);
+                }
+                
+                applySettings();
+                updateUI();
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('main-screen').classList.remove('hidden');
+            } catch(e) { alert("Ошибка авторизации: " + e.message); }
+        }
+
+        async function searchUser() {
+            const q = document.getElementById('searchInput').value.toLowerCase().replace('@','').trim();
+            const resDiv = document.getElementById('search-results');
+            if(!q) { resDiv.innerHTML = ""; return; }
+            
+            // Поиск по точному совпадению username
+            const snap = await db.collection("users").where("username", "==", q).get();
+            resDiv.innerHTML = "";
+            
+            if (snap.empty) { resDiv.innerHTML = "<div style='text-align:center; opacity:0.5; padding:20px; font-size:14px;'>Пользователь не найден</div>"; }
+
+            snap.forEach(doc => {
+                const u = doc.data();
+                if(u.uid === me.uid) return; // Не находим сами себя
+                const char = (u.name && u.name.length > 0) ? u.name[0].toUpperCase() : "?";
+                const avHTML = u.avatar ? `<img src="${u.avatar}">` : char;
+                
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.style.cursor = 'pointer';
+                div.style.display = 'flex';
+                div.style.alignItems = 'center';
+                div.style.gap = '12px';
+                div.innerHTML = `<div class="avatar" style="width:40px; height:40px; font-size:16px;">${avHTML}</div>
+                                 <div><b>${u.name || "User"}</b><br><small style="opacity:0.6;">@${u.username}</small></div>`;
+                div.onclick = () => openChat(u);
+                resDiv.appendChild(div);
+            });
+        }
+
+        function openNews() {
+            isNewsMode = true;
+            document.getElementById('main-screen').classList.add('hidden');
+            document.getElementById('chat-screen').classList.remove('hidden');
+            document.getElementById('chat-title').textContent = "MDC NEWS";
+            document.getElementById('chat-header-av').innerHTML = "📢";
+            document.getElementById('chat-header-av').style.background = "var(--panel)";
+            
+            // Проверка прав на публикацию
+            if (me.email === ADMIN_EMAIL) {
+                document.getElementById('input-area').classList.remove('hidden');
+                document.getElementById('read-only-msg').classList.add('hidden');
+            } else {
+                document.getElementById('input-area').classList.add('hidden');
+                document.getElementById('read-only-msg').classList.remove('hidden');
+            }
+            loadMessages("global_news");
+        }
+
+        function openChat(u) {
+            isNewsMode = false;
+            partner = u;
+            document.getElementById('main-screen').classList.add('hidden');
+            document.getElementById('chat-screen').classList.remove('hidden');
+            document.getElementById('chat-title').textContent = partner.name || "User";
+            
+            // Настройка аватарки в шапке чата
+            const char = (partner.name && partner.name.length > 0) ? partner.name[0].toUpperCase() : "?";
+            const avHTML = partner.avatar ? `<img src="${partner.avatar}">` : char;
+            document.getElementById('chat-header-av').innerHTML = avHTML;
+            document.getElementById('chat-header-av').style.background = "var(--accent)";
+
+            document.getElementById('input-area').classList.remove('hidden');
+            document.getElementById('read-only-msg').classList.add('hidden');
+            
+            // Создаем уникальный ID чата из двух UID пользователей
+            loadMessages([me.uid, partner.uid].sort().join('_'));
+        }
+
+        function loadMessages(chatId) {
+            const box = document.getElementById('messages');
+            box.innerHTML = "<div style='text-align:center; opacity:0.4; padding:20px;'>Загрузка сообщений...</div>";
+            
+            // Слушаем сообщения в реальном времени
+            db.collection("chats").doc(chatId).collection("messages").orderBy("time", "asc").onSnapshot(snap => {
+                box.innerHTML = "";
+                if (snap.empty) { box.innerHTML = "<div style='text-align:center; opacity:0.3; padding:40px; font-size:13px;'>Нет сообщений. Начните общение!</div>"; }
+                
+                snap.forEach(doc => {
+                    const m = doc.data();
+                    const d = document.createElement('div');
+                    d.className = 'msg ' + (m.sender === me.uid ? 'mine' : 'theirs');
+                    d.textContent = m.text;
+                    box.appendChild(d);
+                });
+                box.scrollTop = box.scrollHeight; // Авто-скролл вниз
+            });
+        }
+
+        async function sendMessage() {
+            const inp = document.getElementById('msgInput');
+            const text = inp.value.trim();
+            if(!text) return;
+            
+            const chatId = isNewsMode ? "global_news" : [me.uid, partner.uid].sort().join('_');
+            
+            // Добавляем сообщение в базу
+            await db.collection("chats").doc(chatId).collection("messages").add({
+                text: text, 
+                sender: me.uid, 
+                time: firebase.firestore.FieldValue.serverTimestamp() // Серверное время
+            });
+            inp.value = "";
+            inp.focus();
+        }
+
+        function applySettings() {
+            if (!me) return;
+            // Применяем тему
+            document.body.classList.toggle('light-theme', me.theme === "light");
+            // Применяем цвет акцента
+            document.documentElement.style.setProperty('--accent', me.accent || "#0088cc");
+            // Настройка цвета для своих сообщений (чуть темнее акцента)
+            if (me.theme === 'dark') {
+                document.documentElement.style.setProperty('--msg-mine', (me.accent === '#ff0000') ? '#990000' : adjustColor(me.accent, -40));
+            } else {
+                document.documentElement.style.setProperty('--msg-mine', me.accent || "#007aff");
+            }
+        }
+
+        function updateUI() {
+            if (!me) return;
+            // Исправление ошибки reading '0'
+            const char = (me.name && me.name.length > 0) ? me.name[0].toUpperCase() : "?";
+            const avHTML = me.avatar ? `<img src="${me.avatar}">` : char;
+            
+            document.getElementById('my-av-btn').innerHTML = avHTML;
+            document.getElementById('set-av-preview').innerHTML = avHTML;
+            document.getElementById('set-name').value = me.name || "";
+            document.getElementById('set-username').value = me.username || "";
+            document.getElementById('set-avatar').value = me.avatar || "";
+            document.getElementById('accent-picker').value = me.accent || "#0088cc";
+        }
+
+        function openSettings() {
+            document.getElementById('main-screen').classList.add('hidden');
+            document.getElementById('settings-screen').classList.remove('hidden');
+            updateUI();
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-screen').classList.add('hidden');
+            document.getElementById('main-screen').classList.remove('hidden');
+        }
+
+        async function saveProfile() {
+            // Сохраняем данные профиля в Firestore
+            const newName = document.getElementById('set-name').value.trim();
+            const newUsername = document.getElementById('set-username').value.toLowerCase().replace('@','').trim();
+            const newAvatar = document.getElementById('set-avatar').value.trim();
+            
+            if (newUsername.length < 3) return alert("Username должен быть минимум 3 символа.");
+
+            me.name = newName || me.email.split('@')[0];
+            me.username = newUsername;
+            me.avatar = newAvatar;
+            
+            try {
+                await db.collection("users").doc(me.uid).update(me);
+                updateUI();
+                applySettings();
+                closeSettings();
+                alert("Профиль успешно обновлен!");
+            } catch (e) { alert("Ошибка сохр
