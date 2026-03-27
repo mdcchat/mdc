@@ -10,62 +10,56 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     
     <style>
-        /* TELEGRAM DARK THEME */
         :root { 
-            --bg: #0e1621; 
-            --panel: #17212b; 
-            --text: #f5f5f5; 
-            --subtext: #7f91a4;
-            --accent: #5288c1; 
-            --msg-mine: #2b5278; 
-            --msg-theirs: #182533;
-            --border: #101921; 
+            --bg: #0e1621; --panel: #17212b; --text: #f5f5f5; --subtext: #7f91a4;
+            --accent: #5288c1; --msg-mine: #2b5278; --msg-theirs: #182533; --border: #101921; 
         }
 
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; overflow: hidden; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; overflow: hidden; }
         .screen { display: flex; flex-direction: column; height: 100vh; width: 100%; position: absolute; background: var(--bg); }
         .hidden { display: none !important; }
 
         /* HEADER */
-        .header { background: var(--panel); padding: 10px 15px; display: flex; align-items: center; border-bottom: 1px solid var(--border); gap: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 10; height: 50px; box-sizing: border-box; }
-        .search-area { flex: 1; background: #242f3d; border-radius: 20px; padding: 6px 15px; display: flex; align-items: center; }
+        .header { background: var(--panel); padding: 10px 15px; display: flex; align-items: center; border-bottom: 1px solid var(--border); gap: 15px; height: 55px; box-sizing: border-box; z-index: 10; }
+        .search-area { flex: 1; background: #242f3d; border-radius: 20px; padding: 8px 15px; display: flex; align-items: center; }
         .search-area input { border: none; background: none; color: var(--text); width: 100%; outline: none; font-size: 15px; }
-        .search-area input::placeholder { color: var(--subtext); }
         
-        .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; cursor: pointer; overflow: hidden; color: #fff; flex-shrink: 0;}
+        .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; cursor: pointer; color: #fff; flex-shrink: 0; overflow: hidden;}
         .avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* LISTS */
-        .card { padding: 12px 15px; display: flex; align-items: center; gap: 15px; cursor: pointer; transition: background 0.2s; border-bottom: 1px solid var(--border); }
-        .card:hover, .card:active { background: #202b36; }
-        .news-icon { width: 40px; height: 40px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 20px; }
-        .card-info { flex: 1; display: flex; flex-direction: column; }
-        .card-title { font-weight: 600; font-size: 16px; margin-bottom: 3px; }
-        .card-subtitle { color: var(--subtext); font-size: 14px; }
+        /* СПИСОК ЧАТОВ */
+        #content-list { overflow-y: auto; flex: 1; }
+        .card { padding: 12px 15px; display: flex; align-items: center; gap: 15px; cursor: pointer; border-bottom: 1px solid var(--border); }
+        .card:hover { background: #202b36; }
+        .card-info { flex: 1; display: flex; flex-direction: column; overflow: hidden;}
+        .card-title { font-weight: 600; font-size: 16px; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        .card-subtitle { color: var(--subtext); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
 
-        /* CHAT */
+        /* КНОПКА СОЗДАНИЯ (+) */
+        .fab { position: absolute; bottom: 20px; right: 20px; width: 56px; height: 56px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; z-index: 20;}
+
+        /* ЧАТ */
         #messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; background: url('https://www.transparenttextures.com/patterns/stardust.png') var(--bg); }
-        .msg { padding: 8px 14px; border-radius: 12px; max-width: 75%; font-size: 15px; line-height: 1.4; word-wrap: break-word; position: relative; }
+        .msg { padding: 8px 14px; border-radius: 12px; max-width: 75%; font-size: 15px; word-wrap: break-word; }
         .msg.mine { align-self: flex-end; background: var(--msg-mine); border-bottom-right-radius: 4px; }
         .msg.theirs { align-self: flex-start; background: var(--msg-theirs); border-bottom-left-radius: 4px; }
+        .msg-sender { font-size: 12px; color: var(--accent); margin-bottom: 4px; font-weight: bold; }
 
-        /* INPUTS & BUTTONS */
         #input-area { padding: 10px 15px; background: var(--panel); display: flex; gap: 10px; align-items: center; }
-        #msgInput { flex: 1; background: var(--bg); border: none; padding: 12px 15px; border-radius: 20px; color: var(--text); font-size: 15px; outline: none; }
-        .send-btn { width: 44px; height: 44px; border-radius: 50%; background: var(--accent); color: #fff; border: none; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        #msgInput { flex: 1; background: var(--bg); border: none; padding: 12px 15px; border-radius: 20px; color: var(--text); outline: none; }
+        .send-btn { width: 44px; height: 44px; border-radius: 50%; background: var(--accent); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
-        .auth-box { width: 320px; background: var(--panel); padding: 30px 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: center; margin: auto; }
-        .tg-input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 14px; border-radius: 8px; margin-bottom: 15px; box-sizing: border-box; font-size: 15px; outline: none; transition: border-color 0.2s;}
-        .tg-input:focus { border-color: var(--accent); }
-        .tg-btn { width: 100%; background: var(--accent); color: #fff; padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; transition: opacity 0.2s;}
-        .tg-btn:active { opacity: 0.8; }
+        /* ФОРМЫ */
+        .auth-box { width: 320px; background: var(--panel); padding: 30px 20px; border-radius: 12px; text-align: center; margin: auto; }
+        .tg-input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 14px; border-radius: 8px; margin-bottom: 15px; box-sizing: border-box; outline: none; }
+        .tg-btn { width: 100%; background: var(--accent); color: #fff; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div id="auth-screen" class="screen" style="justify-content: center; align-items: center; z-index: 100;">
         <div class="auth-box">
-            <h2 style="margin: 0 0 25px; font-weight: 600;">Вход в MDC</h2>
+            <h2 style="margin: 0 0 25px;">Вход в MDC</h2>
             <input type="email" id="email" class="tg-input" placeholder="Email">
             <input type="password" id="pass" class="tg-input" placeholder="Пароль">
             <button class="tg-btn" onclick="handleAuth()">ПРОДОЛЖИТЬ</button>
@@ -80,54 +74,57 @@
                 <input type="text" id="searchInput" placeholder="Поиск @username..." oninput="searchUser()">
             </div>
         </div>
-        
-        <div id="content-list" style="overflow-y: auto; flex: 1;">
-            <div class="card" onclick="openNews()">
-                <div class="news-icon">📢</div>
-                <div class="card-info">
-                    <div class="card-title" style="color: var(--accent);">MDC NEWS</div>
-                    <div class="card-subtitle">Официальный канал</div>
-                </div>
+        <div id="content-list"></div>
+        <div class="fab" onclick="openCreateMenu()">+</div>
+    </div>
+
+    <div id="create-screen" class="screen hidden" style="z-index: 80;">
+        <div class="header">
+            <button onclick="closeCreateMenu()" style="background:none; border:none; color:var(--text); font-size:24px;">←</button>
+            <div class="card-title">Новый чат</div>
+        </div>
+        <div style="padding: 20px;">
+            <div class="auth-box" style="width: auto;">
+                <input type="text" id="group-name" class="tg-input" placeholder="Название">
+                <select id="group-type" class="tg-input" style="color: var(--text);">
+                    <option value="group">Группа</option>
+                    <option value="channel">Канал</option>
+                </select>
+                <button class="tg-btn" onclick="createGroup()">СОЗДАТЬ</button>
             </div>
-            <div id="search-results"></div>
         </div>
     </div>
 
     <div id="chat-screen" class="screen hidden" style="z-index: 50;">
         <div class="header" style="gap: 10px;">
-            <button onclick="backToMain()" style="background:none; border:none; color:var(--text); font-size:24px; cursor:pointer; padding:0 5px;">←</button>
+            <button onclick="backToMain()" style="background:none; border:none; color:var(--text); font-size:24px;">←</button>
             <div class="avatar" id="chat-av">?</div>
             <div class="card-info" style="flex:1;">
-                <div class="card-title" id="chat-title" style="font-size:16px;">Чат</div>
-                <div class="card-subtitle" id="chat-subtitle" style="font-size:12px;">online</div>
+                <div id="chat-title" class="card-title">Чат</div>
+                <div id="chat-subtitle" class="card-subtitle">online</div>
             </div>
         </div>
         <div id="messages"></div>
         <div id="input-area">
-            <input type="text" id="msgInput" placeholder="Написать сообщение...">
+            <input type="text" id="msgInput" placeholder="Сообщение...">
             <button class="send-btn" onclick="sendMessage()">➤</button>
         </div>
-        <div id="read-only-msg" class="hidden" style="padding: 15px; text-align: center; color: var(--subtext); background: var(--panel); font-size: 14px;">
-            Только администратор может публиковать новости.
+        <div id="read-only-msg" class="hidden" style="padding: 15px; text-align: center; color: var(--subtext); background: var(--panel);">
+            Только администратор может писать здесь.
         </div>
     </div>
 
     <div id="settings-screen" class="screen hidden" style="z-index: 80;">
         <div class="header">
-            <button onclick="closeSettings()" style="background:none; border:none; color:var(--text); font-size:24px; cursor:pointer; padding:0 5px;">←</button>
-            <div class="card-title" style="font-size:18px;">Настройки профиля</div>
+            <button onclick="closeSettings()" style="background:none; border:none; color:var(--text); font-size:24px;">←</button>
+            <div class="card-title">Профиль</div>
         </div>
-        <div style="padding: 20px; overflow-y: auto;">
-            <div class="auth-box" style="width: auto; margin-bottom: 20px; text-align: left;">
-                <label style="color: var(--subtext); font-size: 13px; margin-bottom: 5px; display: block;">Имя (видно всем)</label>
+        <div style="padding: 20px;">
+            <div class="auth-box" style="width: auto; text-align: left;">
+                <label style="color: var(--subtext); font-size: 13px;">Имя</label>
                 <input type="text" id="set-name" class="tg-input">
-                
-                <label style="color: var(--subtext); font-size: 13px; margin-bottom: 5px; display: block;">Username (для поиска)</label>
+                <label style="color: var(--subtext); font-size: 13px;">Username</label>
                 <input type="text" id="set-username" class="tg-input">
-                
-                <label style="color: var(--subtext); font-size: 13px; margin-bottom: 5px; display: block;">Ссылка на аватарку</label>
-                <input type="text" id="set-avatar" class="tg-input">
-                
                 <button class="tg-btn" onclick="saveProfile()">СОХРАНИТЬ</button>
             </div>
         </div>
@@ -148,11 +145,7 @@
         const db = firebase.firestore();
         
         let me = null;
-        let partner = null;
-        let isNewsMode = false;
-        
-        // Эта почта нужна только внутри кода, чтобы дать права админа писать в новости
-        const ADMIN_EMAIL = "finderss42@gmail.com"; 
+        let currentChat = null;
 
         async function handleAuth() {
             const email = document.getElementById('email').value.trim();
@@ -161,7 +154,7 @@
             errDiv.style.display = 'none';
 
             if(!email || pass.length < 6) {
-                errDiv.textContent = "Нужен Email и пароль от 6 символов";
+                errDiv.textContent = "Email и пароль (минимум 6 символов)";
                 errDiv.style.display = 'block';
                 return;
             }
@@ -170,124 +163,114 @@
                 let res;
                 try {
                     res = await auth.signInWithEmailAndPassword(email, pass);
-                } catch (loginErr) {
-                    // Обходим ошибку invalid-login-credentials
-                    if (loginErr.code === 'auth/user-not-found' || loginErr.code === 'auth/invalid-credential' || loginErr.code === 'auth/invalid-login-credentials') {
-                        try {
-                            res = await auth.createUserWithEmailAndPassword(email, pass);
-                        } catch (createErr) {
-                            throw createErr;
-                        }
-                    } else {
-                        throw loginErr;
-                    }
+                } catch (e) {
+                    // Если пользователя нет — регистрируем автоматически
+                    if (e.code.includes('user-not-found') || e.code.includes('credential')) {
+                        res = await auth.createUserWithEmailAndPassword(email, pass);
+                    } else throw e;
                 }
 
                 const doc = await db.collection("users").doc(res.user.uid).get();
-                if (doc.exists) {
-                    me = doc.data();
-                } else {
-                    me = { 
-                        uid: res.user.uid, 
-                        email: email, 
-                        name: email.split('@')[0], 
-                        username: "user" + Math.floor(Math.random()*9999), 
-                        avatar: ""
-                    };
+                if (doc.exists) me = doc.data();
+                else {
+                    me = { uid: res.user.uid, email: email, name: email.split('@')[0], username: "u" + Math.floor(Math.random()*9999) };
                     await db.collection("users").doc(me.uid).set(me);
                 }
                 
-                updateUI();
                 document.getElementById('auth-screen').classList.add('hidden');
                 document.getElementById('main-screen').classList.remove('hidden');
+                updateUI();
+                loadRecentChats();
             } catch(e) { 
-                console.error(e);
                 errDiv.textContent = "Ошибка: " + e.message; 
                 errDiv.style.display = 'block';
             }
         }
 
-        async function searchUser() {
-            const q = document.getElementById('searchInput').value.toLowerCase().replace('@','').trim();
-            const resDiv = document.getElementById('search-results');
-            if(!q) { resDiv.innerHTML = ""; return; }
-            
-            const snap = await db.collection("users").where("username", "==", q).get();
-            resDiv.innerHTML = "";
-            
-            if (snap.empty) { 
-                resDiv.innerHTML = "<div style='text-align:center; color:var(--subtext); padding:20px; font-size:14px;'>Не найдено</div>"; 
-            }
-
-            snap.forEach(doc => {
-                const u = doc.data();
-                if(u.uid === me.uid) return;
-                const char = (u.name) ? u.name[0].toUpperCase() : "?";
-                const avHTML = u.avatar ? `<img src="${u.avatar}">` : char;
-                
-                const div = document.createElement('div');
-                div.className = 'card';
-                div.innerHTML = `
-                    <div class="avatar">${avHTML}</div>
-                    <div class="card-info">
-                        <div class="card-title">${u.name || "User"}</div>
-                        <div class="card-subtitle">@${u.username}</div>
-                    </div>`;
-                div.onclick = () => openChat(u);
-                resDiv.appendChild(div);
+        function loadRecentChats() {
+            const list = document.getElementById('content-list');
+            db.collection("chats").where("participants", "array-contains", me.uid).orderBy("updatedAt", "desc").onSnapshot(snap => {
+                if(document.getElementById('searchInput').value.trim() !== "") return; 
+                list.innerHTML = "";
+                snap.forEach(doc => {
+                    const chat = doc.data();
+                    chat.id = doc.id;
+                    let title = chat.name || (chat.participantNames ? (chat.participantNames[me.uid] === chat.name1 ? chat.name2 : chat.name1) : "Чат");
+                    list.innerHTML += `
+                        <div class="card" onclick='openChatWindow(${JSON.stringify(chat).replace(/'/g, "&apos;")})'>
+                            <div class="avatar">${title[0].toUpperCase()}</div>
+                            <div class="card-info">
+                                <div class="card-title">${title}</div>
+                                <div class="card-subtitle">${chat.lastMessage || "Нет сообщений"}</div>
+                            </div>
+                        </div>`;
+                });
             });
         }
 
-        function openNews() {
-            isNewsMode = true;
-            document.getElementById('main-screen').classList.add('hidden');
-            document.getElementById('chat-screen').classList.remove('hidden');
-            document.getElementById('chat-title').textContent = "MDC NEWS";
-            document.getElementById('chat-subtitle').textContent = "Официальный канал";
-            document.getElementById('chat-av').innerHTML = "📢";
-            document.getElementById('chat-av').style.background = "#fff";
-            document.getElementById('chat-av').style.color = "#000";
+        async function searchUser() {
+            const q = document.getElementById('searchInput').value.toLowerCase().replace('@','').trim();
+            const list = document.getElementById('content-list');
+            if(!q) { loadRecentChats(); return; }
             
-            if (me.email === ADMIN_EMAIL) {
-                document.getElementById('input-area').classList.remove('hidden');
-                document.getElementById('read-only-msg').classList.add('hidden');
-            } else {
-                document.getElementById('input-area').classList.add('hidden');
-                document.getElementById('read-only-msg').classList.remove('hidden');
-            }
-            loadMessages("global_news");
+            const snap = await db.collection("users").where("username", ">=", q).where("username", "<=", q + '\uf8ff').get();
+            list.innerHTML = "<div style='padding:10px 15px; color:var(--accent); font-weight:bold;'>Поиск:</div>";
+            
+            snap.forEach(doc => {
+                const u = doc.data();
+                if(u.uid === me.uid) return;
+                const tempChat = { id: [me.uid, u.uid].sort().join('_'), type: 'dm', partnerId: u.uid, title: u.name, username: u.username };
+                list.innerHTML += `
+                    <div class="card" onclick='openChatWindow(${JSON.stringify(tempChat).replace(/'/g, "&apos;")})'>
+                        <div class="avatar">${u.name[0].toUpperCase()}</div>
+                        <div class="card-info"><div class="card-title">${u.name}</div><div class="card-subtitle">@${u.username}</div></div>
+                    </div>`;
+            });
         }
 
-        function openChat(u) {
-            isNewsMode = false;
-            partner = u;
+        function openCreateMenu() {
+            document.getElementById('main-screen').classList.add('hidden');
+            document.getElementById('create-screen').classList.remove('hidden');
+        }
+        function closeCreateMenu() {
+            document.getElementById('create-screen').classList.add('hidden');
+            document.getElementById('main-screen').classList.remove('hidden');
+        }
+
+        async function createGroup() {
+            const name = document.getElementById('group-name').value.trim();
+            const type = document.getElementById('group-type').value;
+            if(!name) return;
+            const id = "group_" + Date.now();
+            await db.collection("chats").doc(id).set({
+                id, name, type, adminId: me.uid, participants: [me.uid], lastMessage: "Чат создан", updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            closeCreateMenu();
+        }
+
+        function openChatWindow(chatData) {
+            currentChat = chatData;
             document.getElementById('main-screen').classList.add('hidden');
             document.getElementById('chat-screen').classList.remove('hidden');
-            document.getElementById('chat-title').textContent = partner.name || "User";
-            document.getElementById('chat-subtitle').textContent = "@" + partner.username;
+            document.getElementById('chat-title').textContent = currentChat.title || currentChat.name;
+            document.getElementById('chat-av').textContent = document.getElementById('chat-title').textContent[0].toUpperCase();
             
-            const char = (partner.name) ? partner.name[0].toUpperCase() : "?";
-            document.getElementById('chat-av').innerHTML = partner.avatar ? `<img src="${partner.avatar}">` : char;
-            document.getElementById('chat-av').style.background = "var(--accent)";
-            document.getElementById('chat-av').style.color = "#fff";
-
-            document.getElementById('input-area').classList.remove('hidden');
-            document.getElementById('read-only-msg').classList.add('hidden');
+            const isAdmin = currentChat.type !== 'channel' || currentChat.adminId === me.uid;
+            document.getElementById('input-area').classList.toggle('hidden', !isAdmin);
+            document.getElementById('read-only-msg').classList.toggle('hidden', isAdmin);
             
-            loadMessages([me.uid, partner.uid].sort().join('_'));
+            loadMessages(currentChat.id);
         }
 
         function loadMessages(chatId) {
             const box = document.getElementById('messages');
-            box.innerHTML = "";
-            
             db.collection("chats").doc(chatId).collection("messages").orderBy("time", "asc").onSnapshot(snap => {
                 box.innerHTML = "";
                 snap.forEach(doc => {
                     const m = doc.data();
                     const d = document.createElement('div');
-                    d.className = 'msg ' + (m.sender === me.uid ? 'mine' : 'theirs');
-                    d.textContent = m.text;
+                    d.className = 'msg ' + (m.senderId === me.uid ? 'mine' : 'theirs');
+                    d.innerHTML = (currentChat.type === 'group' && m.senderId !== me.uid ? `<div class="msg-sender">${m.senderName}</div>` : "") + m.text;
                     box.appendChild(d);
                 });
                 box.scrollTop = box.scrollHeight;
@@ -299,61 +282,41 @@
             const text = inp.value.trim();
             if(!text) return;
             
-            const chatId = isNewsMode ? "global_news" : [me.uid, partner.uid].sort().join('_');
-            
-            await db.collection("chats").doc(chatId).collection("messages").add({
-                text: text, 
-                sender: me.uid, 
-                time: firebase.firestore.FieldValue.serverTimestamp()
+            await db.collection("chats").doc(currentChat.id).collection("messages").add({
+                text, senderId: me.uid, senderName: me.name, time: firebase.firestore.FieldValue.serverTimestamp()
             });
+
+            const update = { lastMessage: text, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+            if (currentChat.type === 'dm') {
+                update.participants = [me.uid, currentChat.partnerId];
+                update.type = 'dm';
+                update.name1 = me.name; update.name2 = currentChat.title;
+                update.participantNames = { [me.uid]: me.name, [currentChat.partnerId]: currentChat.title };
+            }
+            await db.collection("chats").doc(currentChat.id).set(update, { merge: true });
             inp.value = "";
-            inp.focus();
         }
 
-        function updateUI() {
-            if (!me) return;
-            const char = (me.name) ? me.name[0].toUpperCase() : "?";
-            document.getElementById('my-av-btn').innerHTML = me.avatar ? `<img src="${me.avatar}">` : char;
-            
-            document.getElementById('set-name').value = me.name || "";
-            document.getElementById('set-username').value = me.username || "";
-            document.getElementById('set-avatar').value = me.avatar || "";
+        function updateUI() { if(me) document.getElementById('my-av-btn').textContent = me.name[0].toUpperCase(); }
+        function openSettings() { 
+            document.getElementById('main-screen').classList.add('hidden'); 
+            document.getElementById('settings-screen').classList.remove('hidden'); 
+            document.getElementById('set-name').value = me.name; 
+            document.getElementById('set-username').value = me.username;
         }
-
-        function openSettings() {
-            document.getElementById('main-screen').classList.add('hidden');
-            document.getElementById('settings-screen').classList.remove('hidden');
-            updateUI();
+        function closeSettings() { 
+            document.getElementById('settings-screen').classList.add('hidden'); 
+            document.getElementById('main-screen').classList.remove('hidden'); 
         }
-
-        function closeSettings() {
-            document.getElementById('settings-screen').classList.add('hidden');
-            document.getElementById('main-screen').classList.remove('hidden');
-        }
-
         async function saveProfile() {
-            const newName = document.getElementById('set-name').value.trim();
-            const newUsername = document.getElementById('set-username').value.toLowerCase().replace('@','').trim();
-            const newAvatar = document.getElementById('set-avatar').value.trim();
-            
-            if (newUsername.length < 3) return alert("Username от 3 символов.");
-
-            me.name = newName || me.email.split('@')[0];
-            me.username = newUsername;
-            me.avatar = newAvatar;
-            
-            try {
-                await db.collection("users").doc(me.uid).update(me);
-                updateUI();
-                closeSettings();
-            } catch (e) { alert("Ошибка сохранения: " + e.message); }
+            me.name = document.getElementById('set-name').value.trim();
+            me.username = document.getElementById('set-username').value.trim().toLowerCase();
+            await db.collection("users").doc(me.uid).update(me);
+            updateUI(); closeSettings();
         }
-
         function backToMain() {
             document.getElementById('chat-screen').classList.add('hidden');
             document.getElementById('main-screen').classList.remove('hidden');
-            document.getElementById('searchInput').value = "";
-            document.getElementById('search-results').innerHTML = "";
         }
     </script>
 </body>
