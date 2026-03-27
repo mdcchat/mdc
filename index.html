@@ -3,95 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MDC Ultra</title>
+    <title>MDC Classic</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <style>
         :root { --bg: #0e1621; --panel: #17212b; --accent: #5288c1; --text: #fff; --border: #101921; }
-        * { box-sizing: border-box; }
-        body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: sans-serif; height: 100%; overflow: hidden; }
-        
-        .screen { display: flex; flex-direction: column; height: 100vh; width: 100%; position: absolute; transition: 0.3s; background: var(--bg); }
+        body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: sans-serif; height: 100vh; overflow: hidden; }
+        .screen { display: flex; flex-direction: column; height: 100%; width: 100%; position: absolute; background: var(--bg); }
         .hidden { display: none !important; }
 
         /* Шапка */
-        .header { background: var(--panel); height: 60px; display: flex; align-items: center; padding: 0 15px; border-bottom: 1px solid var(--border); gap: 15px; }
-        .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: bold; }
-
-        /* Списки */
-        .list { flex: 1; overflow-y: auto; }
-        .card { padding: 12px 15px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid var(--border); cursor: pointer; }
-        .card:active { background: #1c2936; }
+        .header { background: var(--panel); height: 60px; display: flex; align-items: center; padding: 0 15px; border-bottom: 1px solid var(--border); justify-content: space-between; flex-shrink: 0; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; }
 
         /* Чат */
-        #messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; }
-        .msg { padding: 10px 14px; border-radius: 15px; max-width: 80%; font-size: 15px; word-wrap: break-word; }
-        .msg.mine { align-self: flex-end; background: #2b5278; border-bottom-right-radius: 4px; }
-        .msg.theirs { align-self: flex-start; background: #182533; border-bottom-left-radius: 4px; }
+        #messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .msg { padding: 10px 14px; border-radius: 15px; max-width: 85%; word-wrap: break-word; position: relative; }
+        .msg.mine { align-self: flex-end; background: #2b5278; border-bottom-right-radius: 2px; }
+        .msg.theirs { align-self: flex-start; background: #182533; border-bottom-left-radius: 2px; }
+        .u-name { font-size: 11px; color: var(--accent); font-weight: bold; margin-bottom: 3px; }
 
         /* Ввод */
-        .input-bar { background: var(--panel); padding: 10px; display: flex; gap: 10px; border-top: 1px solid var(--border); }
-        input.tg { flex: 1; background: var(--bg); border: 1px solid #242f3d; padding: 12px; border-radius: 20px; color: #fff; outline: none; }
-        .send-btn { background: var(--accent); color: #fff; border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; }
+        .input-bar { background: var(--panel); padding: 10px 15px; display: flex; gap: 10px; border-top: 1px solid var(--border); align-items: center; }
+        input.tg-in { flex: 1; background: var(--bg); border: 1px solid #242f3d; padding: 12px; border-radius: 20px; color: #fff; outline: none; }
+        .send-btn { background: var(--accent); color: #fff; border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; font-size: 20px; }
 
-        /* Настройки */
-        .settings-box { padding: 20px; }
-        .settings-box input { width: 100%; margin-bottom: 15px; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel); color: #fff; }
-
-        /* Табы */
-        .tabs { display: flex; background: var(--panel); border-bottom: 1px solid var(--border); }
-        .tab { flex: 1; text-align: center; padding: 12px; color: #7f91a4; cursor: pointer; }
-        .tab.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
+        /* Формы */
+        .box { background: var(--panel); padding: 25px; border-radius: 15px; width: 90%; max-width: 350px; text-align: center; }
+        input.form-in { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: #fff; }
+        .btn { width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div id="auth-screen" class="screen" style="justify-content: center; align-items: center; z-index: 100;">
-        <div style="background: var(--panel); padding: 30px; border-radius: 15px; text-align: center; width: 90%; max-width: 350px;">
-            <h2>MDC Ultra</h2>
-            <input type="email" id="email" class="tg" style="width:100%; margin-bottom:10px" placeholder="Email">
-            <input type="password" id="pass" class="tg" style="width:100%; margin-bottom:15px" placeholder="Пароль">
-            <button onclick="handleAuth()" style="width:100%; padding:12px; background:var(--accent); border:none; border-radius:8px; color:#fff; font-weight:bold;">ВОЙТИ</button>
+    <div id="auth-screen" class="screen" style="justify-content: center; align-items: center; z-index: 10;">
+        <div class="box">
+            <h2>MDC Вход</h2>
+            <input type="email" id="email" class="form-in" placeholder="Email">
+            <input type="password" id="pass" class="form-in" placeholder="Пароль">
+            <button class="btn" onclick="handleAuth()">ВОЙТИ / РЕГ</button>
+            <p id="auth-err" style="color:red; font-size:12px; margin-top:10px;"></p>
         </div>
     </div>
 
-    <div id="main-screen" class="screen hidden">
-        <div class="header">
-            <div class="avatar" id="my-av" onclick="showSettings()">?</div>
-            <b id="my-name-display">MDC Ultra</b>
-        </div>
-        <div class="tabs">
-            <div id="tab-chats" class="tab active" onclick="switchTab('chats')">ЧАТЫ</div>
-            <div id="tab-users" class="tab" onclick="switchTab('users')">ВСЕ ЮЗЕРЫ</div>
-        </div>
-        <div id="list" class="list"></div>
-    </div>
-
-    <div id="settings-screen" class="screen hidden">
-        <div class="header">
-            <button onclick="hideSettings()" style="background:none; border:none; color:var(--accent); font-size:20px;">←</button>
-            <b>Настройки профиля</b>
-        </div>
-        <div class="settings-box">
-            <label>Ваше имя:</label>
-            <input type="text" id="new-name" class="tg">
-            <label>Ваш никнейм (@):</label>
-            <input type="text" id="new-username" class="tg">
-            <button onclick="saveProfile()" style="width:100%; padding:12px; background:var(--accent); border:none; border-radius:8px; color:#fff;">СОХРАНИТЬ</button>
+    <div id="settings-screen" class="screen hidden" style="justify-content: center; align-items: center; z-index: 5;">
+        <div class="box">
+            <h3>Настройки профиля</h3>
+            <input type="text" id="new-name" class="form-in" placeholder="Ваше имя">
+            <button class="btn" onclick="saveName()">СОХРАНИТЬ</button>
+            <button class="btn" onclick="hideSettings()" style="background:#444; margin-top:10px;">НАЗАД</button>
         </div>
     </div>
 
     <div id="chat-screen" class="screen hidden">
         <div class="header">
-            <button onclick="closeChat()" style="background:none; border:none; color:var(--accent); font-size:24px;">←</button>
-            <div class="avatar" id="chat-av">?</div>
-            <b id="chat-title">Чат</b>
+            <div style="font-weight: bold;">Общий чат (MDC)</div>
+            <div class="avatar" id="my-av" onclick="showSettings()">?</div>
         </div>
         <div id="messages"></div>
         <div class="input-bar">
-            <input type="text" id="msgInput" class="tg" placeholder="Сообщение...">
-            <button class="send-btn" onclick="sendMsg()">➤</button>
+            <input type="text" id="msgInput" class="tg-in" placeholder="Написать сообщение...">
+            <button class="send-btn" onclick="send()">➤</button>
         </div>
     </div>
 
@@ -105,131 +78,83 @@
     };
     firebase.initializeApp(config);
     const auth = firebase.auth(), db = firebase.firestore();
-    let me = null, activeChatId = null, currentTab = 'chats';
+    let me = null;
 
-    // 1. АВТОРИЗАЦИЯ
-    auth.onAuthStateChanged(async user => {
-        if(user) {
-            const doc = await db.collection("users").doc(user.uid).get();
-            me = doc.exists ? doc.data() : { uid: user.uid, name: user.email.split('@')[0], username: "id" + user.uid.slice(0,4) };
-            if(!doc.exists) await db.collection("users").doc(user.uid).set(me);
-            
-            document.getElementById('auth-screen').classList.add('hidden');
-            document.getElementById('main-screen').classList.remove('hidden');
-            document.getElementById('my-av').innerText = me.name[0].toUpperCase();
-            document.getElementById('my-name-display').innerText = me.name;
-            switchTab('chats');
-        }
-    });
-
+    // Вход/Регистрация
     async function handleAuth() {
         const e = document.getElementById('email').value, p = document.getElementById('pass').value;
-        try { await auth.signInWithEmailAndPassword(e, p); } catch { await auth.createUserWithEmailAndPassword(e, p); }
+        try {
+            let res;
+            try { res = await auth.signInWithEmailAndPassword(e, p); }
+            catch { res = await auth.createUserWithEmailAndPassword(e, p); }
+            // После входа создаем профиль, если его нет
+            me = { uid: res.user.uid, name: e.split('@')[0] };
+            const doc = await db.collection("users").doc(me.uid).get();
+            if (doc.exists) me = doc.data(); else await db.collection("users").doc(me.uid).set(me);
+            
+            startApp();
+        } catch(err) { document.getElementById('auth-err').innerText = err.message; }
     }
 
-    // 2. НАСТРОЙКИ
-    function showSettings() {
-        document.getElementById('main-screen').classList.add('hidden');
-        document.getElementById('settings-screen').classList.remove('hidden');
-        document.getElementById('new-name').value = me.name;
-        document.getElementById('new-username').value = me.username || "";
-    }
-
-    function hideSettings() {
-        document.getElementById('settings-screen').classList.add('hidden');
-        document.getElementById('main-screen').classList.remove('hidden');
-    }
-
-    async function saveProfile() {
-        me.name = document.getElementById('new-name').value;
-        me.username = document.getElementById('new-username').value;
-        await db.collection("users").doc(me.uid).set(me);
-        alert("Профиль обновлен!");
-        location.reload();
-    }
-
-    // 3. ЧАТЫ И ПРИВАТНОСТЬ
-    function switchTab(tab) {
-        currentTab = tab;
-        document.getElementById('tab-chats').classList.toggle('active', tab === 'chats');
-        document.getElementById('tab-users').classList.toggle('active', tab === 'users');
-        loadList();
-    }
-
-    function loadList() {
-        const container = document.getElementById('list');
-        container.innerHTML = "";
-        
-        const collection = currentTab === 'users' ? 'users' : 'chats';
-        
-        if(currentTab === 'users') {
-            db.collection("users").limit(50).get().then(snap => {
-                snap.forEach(doc => {
-                    if(doc.id === me.uid) return;
-                    renderCard(doc.id, doc.data().name);
-                });
-            });
-        } else {
-            // Список активных переписок
-            db.collection("users").doc(me.uid).collection("my_chats").onSnapshot(snap => {
-                container.innerHTML = "";
-                snap.forEach(doc => renderCard(doc.id, doc.data().name));
-            });
-        }
-    }
-
-    function renderCard(id, name) {
-        document.getElementById('list').innerHTML += `
-            <div class="card" onclick="openPrivateChat('${id}', '${name}')">
-                <div class="avatar">${name[0].toUpperCase()}</div>
-                <div><b>${name}</b></div>
-            </div>`;
-    }
-
-    function openPrivateChat(targetId, targetName) {
-        // Уникальный ID чата (сортируем UID чтобы у обоих был один и тот же путь)
-        activeChatId = [me.uid, targetId].sort().join('_');
-        
-        document.getElementById('main-screen').classList.add('hidden');
+    function startApp() {
+        document.getElementById('auth-screen').classList.add('hidden');
         document.getElementById('chat-screen').classList.remove('hidden');
-        document.getElementById('chat-title').innerText = targetName;
-        document.getElementById('chat-av').innerText = targetName[0].toUpperCase();
+        document.getElementById('my-av').innerText = me.name[0].toUpperCase();
+        loadMessages();
+    }
 
-        // Подписываемся на сообщения
-        db.collection("messages").doc(activeChatId).collection("list").orderBy("time", "asc").onSnapshot(snap => {
+    // Загрузка сообщений (Общий чат для всех)
+    function loadMessages() {
+        // Коллекция глобальные_новости -> Документ сообщения -> Подколлекция list
+        db.collection("глобальные_новости").doc("сообщения").collection("list")
+          .orderBy("time", "asc").limitToLast(100).onSnapshot(snap => {
             const box = document.getElementById('messages');
             box.innerHTML = "";
             snap.forEach(doc => {
-                const m = doc.data();
+                const d = doc.data();
                 const div = document.createElement('div');
-                div.className = 'msg ' + (m.uid === me.uid ? 'mine' : 'theirs');
-                div.innerText = m.text;
+                div.className = 'msg ' + (d.uid === me.uid ? 'mine' : 'theirs');
+                div.innerHTML = `<div class="u-name">${d.name || "Гость"}</div>${d.text}`;
                 box.appendChild(div);
             });
             box.scrollTop = box.scrollHeight;
         });
-
-        // Добавляем в список активных чатов обоим
-        const chatInfo = { name: targetName, id: targetId };
-        db.collection("users").doc(me.uid).collection("my_chats").doc(targetId).set(chatInfo);
     }
 
-    async function sendMsg() {
+    // Отправка
+    async function send() {
         const inp = document.getElementById('msgInput');
         if(!inp.value.trim()) return;
-        
-        await db.collection("messages").doc(activeChatId).collection("list").add({
+        await db.collection("глобальные_новости").doc("сообщения").collection("list").add({
             text: inp.value,
             uid: me.uid,
+            name: me.name,
             time: firebase.firestore.FieldValue.serverTimestamp()
         });
         inp.value = "";
     }
 
-    function closeChat() {
+    // Настройки
+    function showSettings() {
         document.getElementById('chat-screen').classList.add('hidden');
-        document.getElementById('main-screen').classList.remove('hidden');
+        document.getElementById('settings-screen').classList.remove('hidden');
+        document.getElementById('new-name').value = me.name;
     }
+    function hideSettings() {
+        document.getElementById('settings-screen').classList.add('hidden');
+        document.getElementById('chat-screen').classList.remove('hidden');
+    }
+    async function saveName() {
+        const n = document.getElementById('new-name').value;
+        if(!n) return;
+        me.name = n;
+        await db.collection("users").doc(me.uid).update({ name: n });
+        document.getElementById('my-av').innerText = n[0].toUpperCase();
+        hideSettings();
+    }
+
+    // Enter для отправки
+    document.getElementById('msgInput').addEventListener('keypress', e => { if(e.key === 'Enter') send(); });
 </script>
 </body>
-    </html>
+</html>
