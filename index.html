@@ -54,7 +54,7 @@
         #msgInput { flex: 1; background: var(--bg); border: none; padding: 12px 15px; border-radius: 20px; color: var(--text); font-size: 15px; outline: none; }
         .send-btn { width: 44px; height: 44px; border-radius: 50%; background: var(--accent); color: #fff; border: none; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
-        .auth-box { width: 320px; background: var(--panel); padding: 30px 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: center; }
+        .auth-box { width: 320px; background: var(--panel); padding: 30px 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: center; margin: auto; }
         .tg-input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 14px; border-radius: 8px; margin-bottom: 15px; box-sizing: border-box; font-size: 15px; outline: none; transition: border-color 0.2s;}
         .tg-input:focus { border-color: var(--accent); }
         .tg-btn { width: 100%; background: var(--accent); color: #fff; padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; transition: opacity 0.2s;}
@@ -66,7 +66,7 @@
     <div id="auth-screen" class="screen" style="justify-content: center; align-items: center; z-index: 100;">
         <div class="auth-box">
             <h2 style="margin: 0 0 25px; font-weight: 600;">Вход в MDC</h2>
-            <input type="email" id="email" class="tg-input" placeholder="Email (finderss42@gmail.com)">
+            <input type="email" id="email" class="tg-input" placeholder="Email">
             <input type="password" id="pass" class="tg-input" placeholder="Пароль">
             <button class="tg-btn" onclick="handleAuth()">ПРОДОЛЖИТЬ</button>
             <div id="auth-error" style="color: #ff5252; font-size: 13px; margin-top: 15px; display: none;"></div>
@@ -150,6 +150,8 @@
         let me = null;
         let partner = null;
         let isNewsMode = false;
+        
+        // Эта почта нужна только внутри кода, чтобы дать права админа писать в новости
         const ADMIN_EMAIL = "finderss42@gmail.com"; 
 
         async function handleAuth() {
@@ -159,21 +161,26 @@
             errDiv.style.display = 'none';
 
             if(!email || pass.length < 6) {
-                errDiv.textContent = "Введите email и пароль (мин. 6 символов)";
+                errDiv.textContent = "Нужен Email и пароль от 6 символов";
                 errDiv.style.display = 'block';
                 return;
             }
 
             try {
                 let res;
-                try { 
-                    res = await auth.signInWithEmailAndPassword(email, pass); 
-                } catch (err) {
-                    if (err.code === 'auth/user-not-found') {
-                        res = await auth.createUserWithEmailAndPassword(email, pass);
-                    } else if (err.code === 'auth/wrong-password') {
-                        throw new Error("Неверный пароль.");
-                    } else { throw err; }
+                try {
+                    res = await auth.signInWithEmailAndPassword(email, pass);
+                } catch (loginErr) {
+                    // Обходим ошибку invalid-login-credentials
+                    if (loginErr.code === 'auth/user-not-found' || loginErr.code === 'auth/invalid-credential' || loginErr.code === 'auth/invalid-login-credentials') {
+                        try {
+                            res = await auth.createUserWithEmailAndPassword(email, pass);
+                        } catch (createErr) {
+                            throw createErr;
+                        }
+                    } else {
+                        throw loginErr;
+                    }
                 }
 
                 const doc = await db.collection("users").doc(res.user.uid).get();
