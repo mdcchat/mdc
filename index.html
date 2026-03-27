@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MDC Ultra v2</title>
+    <title>MDC Ultra Pro</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
@@ -11,197 +11,162 @@
         :root { --bg: #0e1621; --panel: #17212b; --text: #f5f5f5; --accent: #5288c1; --border: #101921; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: sans-serif; height: 100%; overflow: hidden; }
-        .screen { display: flex; flex-direction: column; height: 100vh; width: 100%; position: absolute; background: var(--bg); transition: 0.3s; }
+        .screen { display: flex; flex-direction: column; height: 100vh; width: 100%; position: absolute; background: var(--bg); }
         .hidden { display: none !important; }
-
-        /* HEADER */
-        .header { background: var(--panel); height: 60px; display: flex; align-items: center; padding: 0 15px; border-bottom: 1px solid var(--border); gap: 15px; flex-shrink: 0; }
-        .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; }
-        .search-input { flex: 1; background: #242f3d; border: none; padding: 10px 15px; border-radius: 20px; color: #fff; outline: none; }
-
-        /* LISTS */
-        #chat-list { flex: 1; overflow-y: auto; }
-        .card { padding: 12px 15px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid var(--border); cursor: pointer; }
-        .card:active { background: #202b36; }
-        .card-info { flex: 1; }
-        .card-title { font-weight: bold; }
-        .card-sub { color: #7f91a4; font-size: 14px; }
-
-        /* CHAT AREA */
-        #messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; padding-bottom: 80px; }
-        .msg { padding: 10px 14px; border-radius: 15px; max-width: 80%; font-size: 15px; line-height: 1.4; word-wrap: break-word; position: relative; }
-        .msg.mine { align-self: flex-end; background: #2b5278; border-bottom-right-radius: 4px; }
-        .msg.theirs { align-self: flex-start; background: #182533; border-bottom-left-radius: 4px; }
-        .sender-name { font-size: 11px; color: var(--accent); font-weight: bold; margin-bottom: 4px; }
-
-        /* INPUT BAR */
-        .input-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--panel); padding: 10px 15px; display: flex; gap: 10px; align-items: center; border-top: 1px solid var(--border); }
-        .input-bar input { flex: 1; background: var(--bg); border: 1px solid #242f3d; padding: 12px 15px; border-radius: 25px; color: #fff; outline: none; }
-        .send-btn { background: var(--accent); color: #fff; border: none; width: 45px; height: 45px; border-radius: 50%; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-
-        /* AUTH */
-        .auth-container { margin: auto; width: 90%; max-width: 350px; background: var(--panel); padding: 30px; border-radius: 15px; text-align: center; }
-        .auth-input { width: 100%; padding: 14px; margin-bottom: 15px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: #fff; outline: none; }
-        .auth-btn { width: 100%; padding: 14px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .header { background: var(--panel); height: 60px; display: flex; align-items: center; padding: 0 15px; border-bottom: 1px solid var(--border); gap: 15px; }
+        .tabs { display: flex; background: var(--panel); border-bottom: 1px solid var(--border); }
+        .tab { flex: 1; text-align: center; padding: 12px; font-size: 14px; color: #7f91a4; cursor: pointer; }
+        .tab.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
+        .list { flex: 1; overflow-y: auto; }
+        .card { padding: 12px 15px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid var(--border); }
+        .avatar { width: 45px; height: 45px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        #messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; }
+        .msg { padding: 10px; border-radius: 12px; max-width: 80%; font-size: 15px; }
+        .msg.mine { align-self: flex-end; background: #2b5278; }
+        .msg.theirs { align-self: flex-start; background: #182533; }
+        .input-bar { background: var(--panel); padding: 10px; display: flex; gap: 10px; border-top: 1px solid var(--border); }
+        input { flex: 1; background: var(--bg); border: 1px solid #242f3d; padding: 12px; border-radius: 20px; color: #fff; outline: none; }
+        .fab { position: fixed; bottom: 80px; right: 20px; width: 56px; height: 56px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
     </style>
 </head>
 <body>
 
-    <div id="auth-screen" class="screen" style="justify-content: center;">
-        <div class="auth-container">
-            <h2 style="margin-top:0">MDC Ultra</h2>
-            <input type="email" id="auth-email" class="auth-input" placeholder="Email">
-            <input type="password" id="auth-pass" class="auth-input" placeholder="Пароль">
-            <button class="auth-btn" onclick="handleAuth()">ВОЙТИ / СОЗДАТЬ</button>
-            <p id="auth-error" style="color:#ff5252; font-size:12px; margin-top:10px; display:none;"></p>
+    <div id="auth-screen" class="screen" style="justify-content: center; align-items: center; z-index: 100;">
+        <div style="background: var(--panel); padding: 25px; border-radius: 15px; text-align: center; width: 90%; max-width: 320px;">
+            <h2>MDC Ultra</h2>
+            <input type="email" id="email" placeholder="Email" style="width:100%; margin-bottom:10px;">
+            <input type="password" id="pass" placeholder="Пароль" style="width:100%; margin-bottom:15px;">
+            <button onclick="handleAuth()" style="width:100%; padding:12px; background:var(--accent); border:none; border-radius:8px; color:#fff; font-weight:bold;">ВОЙТИ</button>
         </div>
     </div>
 
     <div id="main-screen" class="screen hidden">
         <div class="header">
-            <div class="avatar" id="my-av">?</div>
-            <input type="text" id="search" class="search-input" placeholder="Поиск по @username..." oninput="doSearch()">
+            <b id="my-name">MDC Ultra</b>
         </div>
-        <div id="chat-list">
-            </div>
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('chats')">ЧАТЫ</div>
+            <div class="tab" onclick="switchTab('groups')">ГРУППЫ</div>
+            <div class="tab" onclick="switchTab('channels')">КАНАЛЫ</div>
+        </div>
+        <div id="list" class="list"></div>
+        <div class="fab" id="add-btn" onclick="createSomething()">+</div>
     </div>
 
     <div id="chat-screen" class="screen hidden">
         <div class="header">
-            <button onclick="goBack()" style="background:none; border:none; color:var(--accent); font-size:24px; padding:0 10px;">←</button>
-            <div class="avatar" id="chat-av">?</div>
-            <div style="flex:1">
-                <div id="chat-title" style="font-weight:bold">Чат</div>
-                <div style="font-size:12px; color:#7f91a4">online</div>
-            </div>
+            <button onclick="closeChat()" style="background:none; border:none; color:var(--accent); font-size:24px;">←</button>
+            <b id="target-name">Чат</b>
         </div>
         <div id="messages"></div>
         <div class="input-bar">
             <input type="text" id="msgInput" placeholder="Сообщение...">
-            <button class="send-btn" onclick="send()">➤</button>
+            <button onclick="send()" style="background:var(--accent); border:none; color:#fff; width:45px; height:45px; border-radius:50%">➤</button>
         </div>
     </div>
 
-    <script>
-        const conf = {
-            apiKey: "AIzaSyBuc1D71KVZdyNG8ZeBnHjPPe_QFpqjr9M",
-            authDomain: "mdcjsnsks.firebaseapp.com",
-            projectId: "mdcjsnsks",
-            storageBucket: "mdcjsnsks.firebasestorage.app",
-            messagingSenderId: "389971124460",
-            appId: "1:389971124460:web:417a7f1f3411a3e75dc5c9"
-        };
+<script>
+    const config = {
+        apiKey: "AIzaSyBuc1D71KVZdyNG8ZeBnHjPPe_QFpqjr9M",
+        authDomain: "mdcjsnsks.firebaseapp.com",
+        projectId: "mdcjsnsks",
+        storageBucket: "mdcjsnsks.firebasestorage.app",
+        appId: "1:389971124460:web:417a7f1f3411a3e75dc5c9"
+    };
+    firebase.initializeApp(config);
+    const auth = firebase.auth(), db = firebase.firestore();
+    let me = null, activeId = null, currentMode = 'chats';
 
-        firebase.initializeApp(conf);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        let me = null;
-        let activeChatId = null;
-
-        // Следим за входом
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                db.collection("users").doc(user.uid).get().then(doc => {
-                    me = doc.data() || { uid: user.uid, name: user.email.split('@')[0], username: "user" + Math.floor(Math.random()*1000) };
-                    if (!doc.exists) db.collection("users").doc(user.uid).set(me);
-                    showMain();
-                });
-            }
-        });
-
-        async function handleAuth() {
-            const e = document.getElementById('auth-email').value;
-            const p = document.getElementById('auth-pass').value;
-            const err = document.getElementById('auth-error');
-            try {
-                try { await auth.signInWithEmailAndPassword(e, p); }
-                catch { await auth.createUserWithEmailAndPassword(e, p); }
-            } catch(e) { err.innerText = e.message; err.style.display = 'block'; }
-        }
-
-        function showMain() {
+    auth.onAuthStateChanged(async user => {
+        if(user) {
+            const doc = await db.collection("users").doc(user.uid).get();
+            me = doc.exists ? doc.data() : { uid: user.uid, name: user.email.split('@')[0] };
+            if(!doc.exists) await db.collection("users").doc(user.uid).set(me);
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('main-screen').classList.remove('hidden');
-            document.getElementById('my-av').innerText = me.name[0].toUpperCase();
-            loadChats();
+            document.getElementById('my-name').innerText = me.name;
+            switchTab('chats');
         }
+    });
 
-        function loadChats() {
-            // Загружаем чаты из твоей коллекции "глобальные_новости"
-            db.collection("глобальные_новости").orderBy("updatedAt", "desc").onSnapshot(snap => {
-                const list = document.getElementById('chat-list');
-                list.innerHTML = "";
-                snap.forEach(doc => {
-                    const chat = doc.data();
-                    list.innerHTML += `<div class="card" onclick="openChat('${doc.id}', '${chat.name || doc.id}')">
-                        <div class="avatar">${(chat.name || doc.id)[0].toUpperCase()}</div>
-                        <div class="card-info">
-                            <div class="card-title">${chat.name || doc.id}</div>
-                            <div class="card-sub">${chat.lastMessage || "Нет сообщений"}</div>
-                        </div>
-                    </div>`;
-                });
-            });
-        }
+    async function handleAuth() {
+        const e = document.getElementById('email').value, p = document.getElementById('pass').value;
+        try { await auth.signInWithEmailAndPassword(e, p); } catch { await auth.createUserWithEmailAndPassword(e, p); }
+    }
 
-        async function doSearch() {
-            const q = document.getElementById('search').value.toLowerCase().trim();
-            if(!q) return loadChats();
-            const snap = await db.collection("users").where("username", ">=", q).where("username", "<=", q + '\uf8ff').get();
-            const list = document.getElementById('chat-list');
-            list.innerHTML = "";
+    function switchTab(mode) {
+        currentMode = mode;
+        document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.innerText.toLowerCase().includes(mode.slice(0,-1))));
+        loadList();
+    }
+
+    function loadList() {
+        const coll = currentMode === 'chats' ? 'users' : currentMode;
+        db.collection(coll).onSnapshot(snap => {
+            const container = document.getElementById('list');
+            container.innerHTML = "";
             snap.forEach(doc => {
-                const u = doc.data();
-                list.innerHTML += `<div class="card" onclick="openChat('${u.uid}', '${u.name}')">
-                    <div class="avatar">${u.name[0].toUpperCase()}</div>
-                    <div class="card-info"><b>${u.name}</b><br><small>@${u.username}</small></div>
-                </div>`;
+                if(doc.id === me.uid) return;
+                const data = doc.data();
+                const name = data.name || data.title;
+                container.innerHTML += `
+                    <div class="card" onclick="startChat('${doc.id}', '${name}')">
+                        <div class="avatar">${name[0].toUpperCase()}</div>
+                        <div class="card-info"><b>${name}</b></div>
+                    </div>`;
             });
+        });
+    }
+
+    function startChat(targetId, name) {
+        // ВОТ ТУТ МАГИЯ ПРИВАТНОСТИ:
+        if(currentMode === 'chats') {
+            activeId = [me.uid, targetId].sort().join('_'); // Склеиваем два ID
+        } else {
+            activeId = targetId; // Группы общие
         }
 
-        function openChat(id, title) {
-            activeChatId = id;
-            document.getElementById('main-screen').classList.add('hidden');
-            document.getElementById('chat-screen').classList.remove('hidden');
-            document.getElementById('chat-title').innerText = title;
-            document.getElementById('chat-av').innerText = title[0].toUpperCase();
-            
-            // Подгружаем сообщения из подколлекции docID -> messages
-            db.collection("глобальные_новости").doc(id).collection("messages").orderBy("time", "asc").onSnapshot(snap => {
-                const box = document.getElementById('messages');
-                box.innerHTML = "";
-                snap.forEach(doc => {
-                    const m = doc.data();
-                    const d = document.createElement('div');
-                    d.className = 'msg ' + (m.uid === me.uid ? 'mine' : 'theirs');
-                    d.innerHTML = (m.uid !== me.uid ? `<div class="sender-name">${m.name}</div>` : "") + m.text;
-                    box.appendChild(d);
-                });
-                box.scrollTop = box.scrollHeight;
+        document.getElementById('main-screen').classList.add('hidden');
+        document.getElementById('chat-screen').classList.remove('hidden');
+        document.getElementById('target-name').innerText = name;
+        loadMessages();
+    }
+
+    function loadMessages() {
+        db.collection("messages").doc(activeId).collection("list").orderBy("time", "asc").onSnapshot(snap => {
+            const box = document.getElementById('messages');
+            box.innerHTML = "";
+            snap.forEach(doc => {
+                const m = doc.data();
+                box.innerHTML += `<div class="msg ${m.uid === me.uid ? 'mine' : 'theirs'}">${m.text}</div>`;
             });
+            box.scrollTop = box.scrollHeight;
+        });
+    }
+
+    async function send() {
+        const inp = document.getElementById('msgInput');
+        if(!inp.value.trim()) return;
+        await db.collection("messages").doc(activeId).collection("list").add({
+            text: inp.value, uid: me.uid, time: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        inp.value = "";
+    }
+
+    async function createSomething() {
+        const name = prompt("Введите название:");
+        if(!name) return;
+        if(currentMode === 'groups' || currentMode === 'channels') {
+            await db.collection(currentMode).add({ title: name, creator: me.uid });
+        } else {
+            alert("Чтобы начать чат, выберите пользователя из списка");
         }
+    }
 
-        async function send() {
-            const inp = document.getElementById('msgInput');
-            const txt = inp.value.trim();
-            if(!txt || !activeChatId) return;
-
-            const msgData = { text: txt, uid: me.uid, name: me.name, time: firebase.firestore.FieldValue.serverTimestamp() };
-            await db.collection("глобальные_новости").doc(activeChatId).collection("messages").add(msgData);
-            await db.collection("глобальные_новости").doc(activeChatId).set({
-                lastMessage: txt,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                name: document.getElementById('chat-title').innerText
-            }, { merge: true });
-            inp.value = "";
-        }
-
-        function goBack() {
-            document.getElementById('chat-screen').classList.add('hidden');
-            document.getElementById('main-screen').classList.remove('hidden');
-        }
-
-        document.getElementById('msgInput').onkeypress = e => { if(e.key === 'Enter') send(); };
-    </script>
+    function closeChat() {
+        document.getElementById('chat-screen').classList.add('hidden');
+        document.getElementById('main-screen').classList.remove('hidden');
+    }
+</script>
 </body>
 </html>
